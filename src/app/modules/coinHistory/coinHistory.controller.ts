@@ -50,8 +50,24 @@ const getSingleCoinHistory = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const useCoin = catchAsync(async (req: Request, res: Response) => {
+  
+  const result = await CoinHistoryService.useCoinFromDB(
+    req.user.id,
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Coin used successfully'
+  });
+});
+
+
+
 export const CoinHistoryController = {
   createCoinHistory,
   getMyCoinHistory,
   getSingleCoinHistory,
+  useCoin,
 };

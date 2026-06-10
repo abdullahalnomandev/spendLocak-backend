@@ -23,4 +23,10 @@ router.get(
   CoinHistoryController.getSingleCoinHistory
 );
 
+router.post(
+  '/use-coin',
+  auth(USER_ROLES.USER, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+  CoinHistoryController.useCoin
+);
+
 export const CoinHistoryRoutes = router;
