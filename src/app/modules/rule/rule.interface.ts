@@ -10,6 +10,7 @@ export interface IRule extends Document {
   activeDays?: string[];
   selectedApps?: string[];
   spending_limit?: number;
+  spending_by: 'monthly' | 'weekly' | 'daily'; // monthly || weekly || "daily"
   active: boolean;
   createdAt: Date;
   updatedAt: Date;

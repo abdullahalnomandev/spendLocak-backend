@@ -18,6 +18,13 @@ const userSchema = new Schema<IUser, UserModel>(
       lowercase: true,
       sparse: true,
     },
+    enable_notification: {
+      type: Boolean,
+      default: false,
+    },
+    plaid_access_token: {
+      type: String
+    },
     image: {
       type: String,
       default: 'https://i.ibb.co/z5YHLV9/profile.png',

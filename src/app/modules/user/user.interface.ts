@@ -15,6 +15,8 @@ export interface IUser {
   verified: boolean;
   image: string;
   token?: string;
+  enable_notification: boolean;
+  plaid_access_token?: string;
   authorization?: {
     oneTimeCode: string;
     expireAt: Date;

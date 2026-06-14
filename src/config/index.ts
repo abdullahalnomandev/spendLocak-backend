@@ -31,4 +31,9 @@ export default {
     public_key: process.env.STRIPE_PUBLIC_KEY,
     secret_key: process.env.STRIPE_SECREAT_KEY,
   },
+  plaid: {
+    client_id: process.env.PLAID_CLIENT_ID,
+    secret: process.env.PLAID_SECRET,
+    api_endpoint: process.env.PLAID_API_ENDPOINT,
+  },
 };

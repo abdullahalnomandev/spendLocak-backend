@@ -18,6 +18,12 @@ const ruleSchema = new Schema<IRule, RuleModel>(
       enum: ['food', 'shop', 'travel', 'custom'],
       required: true,
     },
+    spending_by: {
+      type: String,
+      enum: ['monthly', 'weekly', 'daily'],
+      required: true,
+      trim: true,
+    },
     ruleName: {
       type: String,
       required: true,

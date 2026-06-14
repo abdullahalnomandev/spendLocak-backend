@@ -8,6 +8,7 @@ import { RuleRoutes } from '../app/modules/rule/rule.route';
 import { PackageRoutes } from '../app/modules/package/package.route';
 import { CoinHistoryRoutes } from '../app/modules/coinHistory/coinHistory.route';
 import { UserRuleCalendarRoutes } from '../app/modules/userRuleCalendar/userRuleCalendar.route';
+import { PlaidRoutes } from '../app/modules/plaid/plaid.route';
 
 const router = express.Router();
 
@@ -47,6 +48,10 @@ const apiRoutes = [
   {
     path: '/calendar',
     route: UserRuleCalendarRoutes
+  },
+  {
+    path: '/plaid',
+    route: PlaidRoutes
   }
 ];
 
