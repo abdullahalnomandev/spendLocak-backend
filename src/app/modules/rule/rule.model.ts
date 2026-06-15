@@ -44,6 +44,10 @@ const ruleSchema = new Schema<IRule, RuleModel>(
     spending_limit: {
       type: Number,
     },
+    reachedLimit: {
+      type: Number,
+      default: 0,
+    },
     active: {
       type: Boolean,
       default: true,

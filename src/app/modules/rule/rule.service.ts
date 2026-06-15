@@ -35,11 +35,16 @@ const getAllRulesFromDB = async (query: Record<string, any>, userId: string) => 
 };
 
 const getSingleRuleFromDB = async (id: string, userId: string): Promise<IRule | null> => {
-  const result = await Rule.findOne({ _id: id, user: userId });
+  let result = await Rule.findOne({ _id: id, user: userId });
   if (!result) {
     throw new ApiError(StatusCodes.NOT_FOUND, 'Rule not found');
   }
-  return result;
+  // Convert Mongoose document to a plain JS object to safely add custom properties
+  const ruleObject = result.toObject();
+  if(ruleObject.ruleType === "limit_based"){
+    ruleObject.isReachedLimit = Number(ruleObject.reachedLimit)  >= (Number(ruleObject.spending_limit) || 0);
+  }
+  return ruleObject;
 };
 
 const updateRuleToDB = async (
