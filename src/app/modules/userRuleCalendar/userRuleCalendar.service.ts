@@ -7,6 +7,8 @@ import { USER_ROLES } from '../../../enums/user';
 import { Rule } from '../rule/rule.model';
 import dayjs from 'dayjs';
 import { CoinHistory } from '../coinHistory/coinHistory.model';
+import { Notification } from '../notification/notification.mode';
+import admin from '../../../helpers/firebaseConfig';
 
 const createUserRuleCalendarToDB = async (
   payload: Partial<IUserRuleCalendar>,
@@ -21,7 +23,6 @@ const getMyCalendarDataFromDB = async (
   month?: string,
   year?: string,
 ): Promise<{ data: IUserRuleCalendar[] }> => {
-
   const now = dayjs();
 
   // 🧠 default = current month/year
@@ -31,14 +32,14 @@ const getMyCalendarDataFromDB = async (
   // optional: for validation/debug
   const startOfMonth = dayjs(`${finalYear}-${finalMonth}-01`);
 
-  console.log("Year:", finalYear);
-  console.log("Month:", finalMonth);
+  console.log('Year:', finalYear);
+  console.log('Month:', finalMonth);
 
   const result = await UserRuleCalendar.find({
     user: userId,
     date: {
-      $gte: startOfMonth.startOf("month").format("YYYY-MM-DD"),
-      $lte: startOfMonth.endOf("month").format("YYYY-MM-DD"),
+      $gte: startOfMonth.startOf('month').format('YYYY-MM-DD'),
+      $lte: startOfMonth.endOf('month').format('YYYY-MM-DD'),
     },
   });
 
@@ -132,6 +133,31 @@ const updateUserRuleCalendarData = async () => {
         coins: 1,
         type: 'EARN',
       });
+      //  =========================
+      //  CREATE NOTIFICATION
+      //  =========================
+      Notification.create({
+        receiver: user._id,
+        title: '5-day streak bonus',
+        message: `You earned 1 coin for completing 5 days in a row.`,
+        refId: user._id,
+        path: `/user-rule-calendar/${user._id}`,
+      });
+      //  =========================
+      //  SEND PUSH NOTIFICATION
+      //  =========================
+      if (user?.fcmToken && user?.enable_notification) {
+        admin.messaging().send({
+          token: user.fcmToken!,
+          notification: {
+            title: '5-day streak bonus',
+            body: `You earned 1 coin for completing 5 days in a row.`,
+          },
+          data: {
+            message: `You earned 1 coin for completing 5 days in a row.`,
+          },
+        });
+      }
     }
   }
 };

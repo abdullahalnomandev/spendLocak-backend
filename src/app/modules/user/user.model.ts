@@ -22,6 +22,9 @@ const userSchema = new Schema<IUser, UserModel>(
       type: Boolean,
       default: false,
     },
+    fcmToken: {
+      type: String,
+    },
     plaid_access_token: {
       type: String
     },

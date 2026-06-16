@@ -17,6 +17,7 @@ export interface IUser {
   token?: string;
   enable_notification: boolean;
   plaid_access_token?: string;
+  fcmToken?: string;
   authorization?: {
     oneTimeCode: string;
     expireAt: Date;

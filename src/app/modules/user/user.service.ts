@@ -250,12 +250,14 @@ const getUserOverviewFromDB = async (userId: string) => {
   if(!isExistUser){
     throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
   }
+  // this month save balance
   // Update Rules and Date wise progress
-  const isRuleActive = await Rule.findOne({active: true}).lean();
+  const isRuleActive = await Rule.findOne({active: true, user: userId, ruleType:"limit_based"}).lean();
+  const saveBalance = isExistUser.preference?.budget - Number(isRuleActive?.reachedLimit || 100);
   return {
     currentStreak: isExistUser.currentStreak || 0,
     availableCoins: isExistUser.coinBalance || 0,
-    saveBalancePerMonth: 0,
+    saveBalancePerMonth: saveBalance,
   };
 }
 
