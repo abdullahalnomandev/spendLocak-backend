@@ -1,0 +1,147 @@
+import { Request, Response } from 'express';
+import { StatusCodes } from 'http-status-codes';
+import catchAsync from '../../../shared/catchAsync';
+import sendResponse from '../../../shared/sendResponse';
+import { FaqService } from './faq.service';
+import { getSingleFilePath } from '../../../shared/getFilePath';
+
+const create = catchAsync(async (req: Request, res: Response) => {
+  const image = getSingleFilePath(req.files, 'image');
+
+  const data = {
+    ...req.body,
+    ...(image && { image }),
+  };
+
+  const result = await FaqService.createToDB(data);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.CREATED,
+    message: 'FAQ created successfully',
+    data: result,
+  });
+});
+
+const createContact = catchAsync(async (req: Request, res: Response) => {
+  const { name, contact, email, message } = req.body;
+
+  const data = {
+    name,
+    contact,
+    email,
+    message,
+  };
+
+  const result = await FaqService.createContactToDB(data as any);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.CREATED,
+    message: 'Contact form submitted successfully',
+    data: result,
+  });
+});
+
+const getAll = catchAsync(async (req: Request, res: Response) => {
+  const result = await FaqService.getAllFromDB(req.query);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'FAQs retrieved successfully',
+    pagination: result.pagination,
+    data: result.data,
+  });
+});
+
+const getById = catchAsync(async (req: Request, res: Response) => {
+  const result = await FaqService.getByIdFromDB(req.params.id);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'FAQ retrieved successfully',
+    data: result,
+  });
+});
+
+const update = catchAsync(async (req: Request, res: Response) => {
+  const id = req.params.id;
+  const image = getSingleFilePath(req.files, 'image');
+
+  const data = {
+    ...req.body,
+    ...(image && { image }),
+  };
+
+  const result = await FaqService.updateInDB(id, data);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'FAQ updated successfully',
+    data: result,
+  });
+});
+
+const remove = catchAsync(async (req: Request, res: Response) => {
+  const result = await FaqService.deleteFromDB(req.params.id);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'FAQ deleted successfully',
+    data: result,
+  });
+});
+
+// Get all contact submissions
+const getAllContacts = catchAsync(async (req: Request, res: Response) => {
+  const result = await FaqService.getAllContactsFromDB(req.query);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Contact submissions retrieved successfully',
+    pagination: result.pagination,
+    data: result.data,
+  });
+});
+
+// Get a contact submission by ID
+const getContactById = catchAsync(async (req: Request, res: Response) => {
+  const result = await FaqService.getContactByIdFromDB(req.params.id);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Contact submission retrieved successfully',
+    data: result,
+  });
+});
+
+// Get all contact submissions for admin use
+const getAllContactsForAdmin = catchAsync(async (req: Request, res: Response) => {
+  const result = await FaqService.getAllContactsForAdminFromDB(req.query);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'All contact submissions for admin retrieved successfully',
+    pagination: result.pagination,
+    data: result.data,
+  });
+});
+
+export const FaqController = {
+  create,
+  getAll,
+  getById,
+  update,
+  remove,
+  createContact,
+  getAllContacts,
+  getContactById,
+  getAllContactsForAdmin,
+};

@@ -7,13 +7,15 @@ export interface IUser {
   name: string;
   email?: string;
   mobile?: string;
+  phone?: string;
   confirm_password?: string;
   password: string;
   role: USER_ROLES;
   canAccessFeature: boolean;
-  status: 'active' | 'delete';
+  status: 'active' | 'delete' | 'suspended';
   verified: boolean;
   image: string;
+  permissions?: string[];
   token?: string;
   enable_notification: boolean;
   plaid_access_token?: string;

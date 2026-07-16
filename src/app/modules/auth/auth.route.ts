@@ -10,6 +10,10 @@ router.post(
   '/login',
   AuthController.loginUser
 );
+router.post(
+  '/admin-login',
+  AuthController.adminLogin
+);
 
 router.post(
   '/resend-otp',

@@ -11,7 +11,7 @@ const verifyEmail = catchAsync(async (req: Request, res: Response) => {
     success: true,
     statusCode: StatusCodes.OK,
     message: result.message,
-    data:result.token
+    data: result.token,
   });
 });
 
@@ -75,7 +75,7 @@ const resendEmail = catchAsync(async (req: Request, res: Response) => {
 });
 
 const verifyOTPToDb = catchAsync(async (req: Request, res: Response) => {
-  const {otp} = req.body;
+  const { otp } = req.body;
   await AuthService.verifyOTP(otp);
 
   sendResponse(res, {
@@ -85,15 +85,26 @@ const verifyOTPToDb = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-
 const deleteAccount = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user?.id;
-  await AuthService.deleteAccount(userId,req?.body?.password);
+  await AuthService.deleteAccount(userId, req?.body?.password);
 
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
     message: 'Account deleted successfully',
+  });
+});
+
+const adminLogin = catchAsync(async (req: Request, res: Response) => {
+  const { ...loginData } = req.body;
+  const result = await AuthService.adminLoginFromDB(loginData);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Admin logged in successfully.',
+    data: result,
   });
 });
 export const AuthController = {
@@ -104,5 +115,6 @@ export const AuthController = {
   resetPassword,
   changePassword,
   verifyOTPToDb,
-  deleteAccount
+  deleteAccount,
+  adminLogin
 };
