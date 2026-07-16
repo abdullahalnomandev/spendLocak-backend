@@ -36,6 +36,9 @@ const userSchema = new Schema<IUser, UserModel>(
       type: String,
       select: false,
     },
+    phone: {
+      type: String,
+    },
     role: {
       type: String,
       enum: Object.values(USER_ROLES),
@@ -44,9 +47,13 @@ const userSchema = new Schema<IUser, UserModel>(
     },
     status: {
       type: String,
-      enum: ['active', 'delete'],
+      enum: ['active', 'delete', 'suspended'],
       default: 'active',
       required: true,
+    },
+    permissions: {
+      type: [String],
+      default: [],
     },
     preference: {
       motivation: Schema.Types.ObjectId,

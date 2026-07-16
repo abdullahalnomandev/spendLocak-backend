@@ -63,6 +63,17 @@ const useCoin = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getRevenueReport = catchAsync(async (req: Request, res: Response) => {
+  const result = await CoinHistoryService.getRevenueReportFromDB();
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Revenue report retrieved successfully',
+    data: result,
+  });
+});
+
 
 
 export const CoinHistoryController = {
@@ -70,4 +81,5 @@ export const CoinHistoryController = {
   getMyCoinHistory,
   getSingleCoinHistory,
   useCoin,
+  getRevenueReport,
 };

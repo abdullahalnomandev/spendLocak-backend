@@ -5,7 +5,16 @@ import { ICoinHistory } from './coinHistory.interface';
 import { CoinHistory } from './coinHistory.model';
 import { User } from '../user/user.model';
 import { UserRuleCalendar } from '../userRuleCalendar/userRuleCalendar.model';
+import { Package } from '../package/package.model';
 import dayjs from 'dayjs';
+
+type RevenueTier = 'starter' | 'standard' | 'premium';
+
+const tierForAmount = (amount: number): RevenueTier => {
+  if (amount < 100) return 'starter';
+  if (amount < 180) return 'standard';
+  return 'premium';
+};
 
 const createCoinHistoryToDB = async (
   payload: Partial<ICoinHistory>,
@@ -99,9 +108,46 @@ const useCoinFromDB = async (userId: string): Promise<void> => {
 
   await Promise.all(promises);
 };
+
+const getRevenueReportFromDB = async () => {
+  const [purchases, packages] = await Promise.all([
+    CoinHistory.find({ type: 'BUY' })
+      .populate('user', 'name email')
+      .sort({ createdAt: -1 })
+      .lean(),
+    Package.find().lean(),
+  ]);
+
+  const packageByCoins = new Map(packages.map(pkg => [pkg.coins, pkg]));
+
+  const events = purchases.map(purchase => {
+    const pkg = packageByCoins.get(purchase.coins);
+    const amount = pkg?.price || 0;
+    const user = purchase.user as { _id?: string; name?: string } | string;
+
+    return {
+      id: String(purchase._id),
+      customerId: typeof user === 'object' ? String(user?._id) : String(user),
+      customerName:
+        typeof user === 'object' ? user?.name || 'Unknown' : 'Unknown',
+      amount,
+      coins: purchase.coins,
+      tier: tierForAmount(amount),
+      packageId: pkg?._id ? String(pkg._id) : undefined,
+      packageLabel:
+        purchase.description ||
+        (pkg ? `${pkg.coins} Coins Package` : 'Custom'),
+      occurredAt: purchase.createdAt,
+    };
+  });
+
+  return { events };
+};
+
 export const CoinHistoryService = {
   createCoinHistoryToDB,
   getMyCoinHistoryFromDB,
   getSingleCoinHistoryFromDB,
   useCoinFromDB,
+  getRevenueReportFromDB,
 };

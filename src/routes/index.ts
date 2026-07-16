@@ -9,6 +9,8 @@ import { PackageRoutes } from '../app/modules/package/package.route';
 import { CoinHistoryRoutes } from '../app/modules/coinHistory/coinHistory.route';
 import { UserRuleCalendarRoutes } from '../app/modules/userRuleCalendar/userRuleCalendar.route';
 import { PlaidRoutes } from '../app/modules/plaid/plaid.route';
+import { SettingsRoutes } from '../app/modules/settings/settings.route';
+import { FaqRoutes } from '../app/modules/faq/faq.route';
 
 const router = express.Router();
 
@@ -52,6 +54,14 @@ const apiRoutes = [
   {
     path: '/plaid',
     route: PlaidRoutes
+  },
+  {
+    path: '/settings',
+    route: SettingsRoutes
+  },
+  {
+    path: '/faq',
+    route: FaqRoutes
   }
 ];
 

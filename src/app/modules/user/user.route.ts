@@ -9,27 +9,60 @@ const router = express.Router();
 
 router
   .route('/profile')
-  .get(auth(USER_ROLES.ADMIN, USER_ROLES.USER,USER_ROLES.SUPER_ADMIN), UserController.getUserProfile)
+  .get(
+    auth(USER_ROLES.ADMIN, USER_ROLES.USER, USER_ROLES.SUPER_ADMIN),
+    UserController.getUserProfile,
+  )
   .patch(
     auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.USER),
     fileUploadHandler(),
     validateRequest(UserValidation.updateUserZodSchema),
-    UserController.updateProfile
+    UserController.updateProfile,
   );
-
 
 router
   .route('/')
-  .get(auth(USER_ROLES.ADMIN, USER_ROLES.USER,USER_ROLES.SUPER_ADMIN), UserController.getAllUsers)
+  .get(
+    auth(USER_ROLES.ADMIN, USER_ROLES.USER, USER_ROLES.SUPER_ADMIN),
+    UserController.getAllUsers,
+  )
   .post(
     validateRequest(UserValidation.createUserZodSchema),
-    UserController.createUser
-  )
+    UserController.createUser,
+  );
+router
+  .route('/overview/dashboard')
+  .get(
+    auth(USER_ROLES.ADMIN, USER_ROLES.USER, USER_ROLES.SUPER_ADMIN),
+    UserController.getAdminDashboardOverview,
+  );
 
-  router
+router
   .route('/overview')
   .get(
-    auth(USER_ROLES.ADMIN, USER_ROLES.USER,USER_ROLES.SUPER_ADMIN),
-    UserController.getUserOverview
+    auth(USER_ROLES.ADMIN, USER_ROLES.USER, USER_ROLES.SUPER_ADMIN),
+    UserController.getUserOverview,
+  );
+router
+  .route('/admin-users')
+  .get(
+    auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.USER),
+    UserController.getAllAdminUsers,
+  );
+
+router
+  .route('/:id')
+  .patch(
+    auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.USER),
+    UserController.updateUserById,
   )
+  .get(
+    auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.USER),
+    UserController.getUserProfileById,
+  )
+  .delete(
+    auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.USER),
+    UserController.deleteUserById,
+  );
+
 export const UserRoutes = router;

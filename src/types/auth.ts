@@ -1,4 +1,5 @@
 import { USER_AUTH_PROVIDER } from "../app/modules/user/user.constant";
+import { USER_ROLES } from "../enums/user";
 
 export type IVerifyEmail = {
   email: string;
@@ -11,7 +12,8 @@ export type ILoginData = {
   auth_provider: USER_AUTH_PROVIDER.GOOGLE | USER_AUTH_PROVIDER.MOBILE | USER_AUTH_PROVIDER.LOCAL
   google_id_token:string;
   apple_id_token:string;
-};
+  role?: USER_ROLES;
+ };
 
 export type IAuthResetPassword = {
   otp: string;
