@@ -7,15 +7,18 @@ const createUserZodSchema = z.object({
     mobile: z.string().optional(),
     confirm_password: z.string().optional(),
     password: z.string({ required_error: 'Password is required' }).min(8, 'Password must be at least 8 characters').optional(),
-    status: z.enum(['active', 'delete']).optional(),
+    role: z.enum(['super_admin', 'admin', 'user']).optional(),
+    status: z.enum(['active', 'delete', 'suspended']).optional(),
     verified: z.boolean().optional(),
     profileImage: z.string().optional(),
+    permissions: z.array(z.string()).optional(),
     token: z.string().optional(),
     authorization: z.object({
       oneTimeCode: z.string(),
       expireAt: z.coerce.date(),
     }).optional(),
     google_id_token: z.string().optional(),
+    auth_provider: z.string().optional(),
   }),
 });
 
@@ -26,17 +29,18 @@ const updateUserZodSchema = z.object({
     mobile: z.string().optional(),
     confirm_password: z.string().optional(),
     password: z.string().min(8, 'Password must be at least 8 characters').optional(),
-    role: z.enum(['SUPER_ADMIN', 'ADMIN', 'USER']).optional(),
-    status: z.enum(['active', 'delete']).optional(),
+    role: z.enum(['super_admin', 'admin', 'user']).optional(),
+    status: z.enum(['active', 'delete', 'suspended']).optional(),
     verified: z.boolean().optional(),
     profileImage: z.string().optional(),
+    permissions: z.array(z.string()).optional(),
     token: z.string().optional(),
     authorization: z.object({
       oneTimeCode: z.string(),
       expireAt: z.coerce.date(),
     }).optional(),
     google_id_token: z.string().optional(),
-    auth_provider: z.enum(['LOCAL', 'GOOGLE']).optional(),
+    auth_provider: z.enum(['local', 'google']).optional(),
   }),
 });
 

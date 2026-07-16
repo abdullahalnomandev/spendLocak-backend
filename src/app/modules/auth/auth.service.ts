@@ -21,6 +21,7 @@ import { IUser } from '../user/user.interface';
 import generateOTP from '../../../util/generateOTP';
 import { ICreateAccount } from '../../../types/emailTamplate';
 import { Notification } from '../notification/notification.mode';
+import { USER_ROLES } from '../../../enums/user';
 
 //login
 const loginUserFromDB = async (payload: ILoginData) => {
@@ -81,6 +82,13 @@ const loginUserFromDB = async (payload: ILoginData) => {
     );
   }
 
+  if (userInfo.status === 'suspended') {
+    throw new ApiError(
+      StatusCodes.FORBIDDEN,
+      'Your account has been suspended.'
+    );
+  }
+
   // update canAccessFeature
 
   //create token
@@ -99,6 +107,97 @@ const loginUserFromDB = async (payload: ILoginData) => {
   return { data: { accessToken: createToken, userInfo } };
 };
 
+const adminLoginFromDB = async (payload: ILoginData) => {
+  const { email, password, google_id_token } = payload;
+
+
+
+  let userInfo = null;
+
+  //GOOGLE LOGIN
+  if (payload.auth_provider === USER_AUTH_PROVIDER.GOOGLE && google_id_token) {
+    const tokenData = await getUserInfoWithToken(google_id_token);
+    const userEmail = tokenData?.data?.email;
+    userInfo = await User.findOne({ email: userEmail }).select('+password');
+  }
+  // LOCAL LOGIN
+  else {
+    if (payload.auth_provider === USER_AUTH_PROVIDER.LOCAL && password) {
+      const isExist = await User.exists({ email: payload.email })
+        .select('+auth_provider')
+        .lean();
+      if (
+        isExist?.auth_provider === USER_AUTH_PROVIDER.GOOGLE ||
+        isExist?.auth_provider === USER_AUTH_PROVIDER.MOBILE
+      ) {
+        throw new ApiError(
+          StatusCodes.BAD_REQUEST,
+          `Auth provider not correct! You have to login with ${isExist.auth_provider}`
+        );
+      }
+      //check role
+      if (payload.role && (payload.role !== USER_ROLES.ADMIN && payload.role !== USER_ROLES.SUPER_ADMIN)) {
+        throw new ApiError(
+          StatusCodes.FORBIDDEN,
+          'You don’t have permission to access this content..'
+        );
+      }
+
+      userInfo = await User.findOne({ email }).select('+password');
+
+      if (
+        userInfo &&
+        !(await User.isMatchPassword(password, userInfo.password))
+      ) {
+        throw new ApiError(StatusCodes.BAD_REQUEST, 'Password is incorrect!');
+      }
+    }
+  }
+
+  if (!userInfo) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
+  }
+
+  //check verified and status
+  if (!userInfo.verified) {
+    throw new ApiError(
+      StatusCodes.FORBIDDEN,
+      'Please verify your account, then try to login again'
+    );
+  }
+
+  //check user status
+  if (userInfo.status === 'delete') {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      'You don’t have permission to access this content.It looks like your account has been deleted.'
+    );
+  }
+
+  if (userInfo.status === 'suspended') {
+    throw new ApiError(
+      StatusCodes.FORBIDDEN,
+      'Your account has been suspended.'
+    );
+  }
+
+  // update canAccessFeature
+
+  //create token
+  const createToken = jwtHelper.createToken(
+    { id: userInfo._id, role: userInfo.role, email: userInfo.email },
+    config.jwt.jwt_secret as Secret,
+    config.jwt.jwt_expire_in as string
+  );
+
+
+
+  // Remove password from userInfo before returning
+  if (userInfo && userInfo.password) {
+    userInfo.password = undefined as any;
+  }
+  return { data: { accessToken: createToken, userInfo } };
+};
 //forget password
 const forgetPasswordToDB = async (email: string) => {
   const isExistUser = (await User.isExistUserByEmail(email)) as IUser;
@@ -374,5 +473,6 @@ export const AuthService = {
   resetPasswordToDB,
   changePasswordToDB,
   verifyOTP,
-  deleteAccount
+  deleteAccount,
+  adminLoginFromDB
 };

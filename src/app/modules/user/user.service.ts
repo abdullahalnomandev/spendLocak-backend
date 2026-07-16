@@ -18,6 +18,9 @@ import generateOTP from '../../../util/generateOTP';
 import { Motivation } from '../motivation/motivation.model';
 import { Trigger } from '../trigger/trigger.model';
 import { Rule } from '../rule/rule.model';
+import { Package } from '../package/package.model';
+import { CoinHistory } from '../coinHistory/coinHistory.model';
+import { USER_ROLES } from '../../../enums/user';
 
 const updateUserAccessFeature = async (userId: string) => {
   // This function can be used for future access control features
@@ -67,11 +70,13 @@ const createUserToDB = async (
     if (payload.auth_provider === 'local' && payload.password) {
       isValid = true;
 
-      const otp = generateOTP();
-      authorization = {
-        oneTimeCode: otp.toString(),
-        expireAt: new Date(Date.now() + 3 * 60000),
-      };
+      if (!payload.verified) {
+        const otp = generateOTP();
+        authorization = {
+          oneTimeCode: otp.toString(),
+          expireAt: new Date(Date.now() + 3 * 60000),
+        };
+      }
     }
   }
   const createUser = await User.create(payload);
@@ -79,7 +84,7 @@ const createUserToDB = async (
   if (!createUser || !isValid)
     throw new ApiError(StatusCodes.BAD_REQUEST, 'Failed to create user');
 
-  if (isValid && createUser && payload.auth_provider === 'local') {
+  if (isValid && createUser && payload.auth_provider === 'local' && !payload.verified) {
     if (!authorization?.oneTimeCode || !createUser?.email) {
       throw new ApiError(
         StatusCodes.BAD_REQUEST,
@@ -171,16 +176,34 @@ const updateProfileToDB = async (
 };
 
 const getAllUsers = async (query: Record<string, any>) => {
-  const club_id = query.club_id;
-
   // Build base query
-  let baseQuery = User.find();
+  let baseQuery = User.find({role: USER_ROLES.USER});
 
   const userQuery = new QueryBuilder(baseQuery, query)
     .paginate()
     .search(userSearchableField)
     .fields()
     .filter(['club_id'])
+    .sort();
+
+  const result = await userQuery.modelQuery.lean();
+  const pagination = await userQuery.getPaginationInfo();
+
+  return {
+    pagination,
+    data: result,
+  };
+};
+
+const getAllAdminUsers = async (query: Record<string, any>) => {
+  // Build base query
+  let baseQuery = User.find({role: {$ne: USER_ROLES.USER}});
+
+  const userQuery = new QueryBuilder(baseQuery, query)
+    .paginate()
+    .search(userSearchableField)
+    .fields()
+    .filter()
     .sort();
 
   const result = await userQuery.modelQuery.lean();
@@ -261,6 +284,82 @@ const getUserOverviewFromDB = async (userId: string) => {
   };
 }
 
+const updateUserByIdToDB = async (userId: string, payload: Partial<IUser>) => {
+  const isExistUser = await User.findById(userId).lean();
+  if(!isExistUser){
+    throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
+  }
+  return await User.findByIdAndUpdate(userId, { $set: payload }, { new: true }).lean();
+}
+
+const deleteUserByIdFromDB = async (userId: string) => {
+  const isExistUser = await User.findById(userId).lean();
+  if(!isExistUser){
+    throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
+  }
+  return await User.findByIdAndDelete(userId).lean();
+}
+
+const MONTH_LABELS = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+];
+
+const getAdminDashboardOverview = async () => {
+  const activeUsers = await User.find({ status: 'active' }).lean();
+  const allPackages = await Package.find().lean();
+
+  const packagePriceByCoins = new Map(
+    allPackages.map(pkg => [pkg.coins, pkg.price || 0]),
+  );
+
+  const purchases = await CoinHistory.find({ type: 'BUY' }).lean();
+  const totalRevenue = purchases.reduce(
+    (acc, purchase) => acc + (packagePriceByCoins.get(purchase.coins) || 0),
+    0,
+  );
+
+  const now = new Date();
+  const startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+  const recentPurchases = await CoinHistory.find({
+    type: 'BUY',
+    createdAt: { $gte: startDate },
+  }).lean();
+
+  const revenueByMonth = new Map<string, number>();
+  for (let i = 5; i >= 0; i--) {
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    revenueByMonth.set(`${date.getFullYear()}-${date.getMonth()}`, 0);
+  }
+
+  for (const purchase of recentPurchases) {
+    const created = new Date(purchase.createdAt);
+    const key = `${created.getFullYear()}-${created.getMonth()}`;
+    if (!revenueByMonth.has(key)) continue;
+
+    const price = packagePriceByCoins.get(purchase.coins) || 0;
+    revenueByMonth.set(key, (revenueByMonth.get(key) || 0) + price);
+  }
+
+  const revinewGraph = [];
+  for (let i = 5; i >= 0; i--) {
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${date.getFullYear()}-${date.getMonth()}`;
+    revinewGraph.push({
+      month: MONTH_LABELS[date.getMonth()],
+      revenue: (revenueByMonth.get(key) || 0).toFixed(2),
+    });
+  }
+
+  return {
+    totalActiveUsers: activeUsers.length,
+    totalRevenue: totalRevenue.toFixed(2),
+    openTickets: 0,
+    revinewGraph,
+  };
+}
+
+
 
 export const UserService = {
   createUserToDB,
@@ -269,4 +368,8 @@ export const UserService = {
   getAllUsers,
   getUserProfileByIdFromDB,
   getUserOverviewFromDB,
-};
+  updateUserByIdToDB,
+  deleteUserByIdFromDB,
+  getAdminDashboardOverview,
+  getAllAdminUsers,
+}

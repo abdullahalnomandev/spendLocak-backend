@@ -15,6 +15,10 @@ const createUser = catchAsync(
       confirm_password,
       google_id_token,
       auth_provider,
+      role,
+      status,
+      verified,
+      permissions,
     } = req.body;
 
     const result = await UserService.createUserToDB({
@@ -25,6 +29,10 @@ const createUser = catchAsync(
       confirm_password,
       google_id_token,
       auth_provider,
+      role,
+      status,
+      verified,
+      permissions,
     });
     const responseData = auth_provider === 'local' ? undefined : result;
     sendResponse(res, {
@@ -129,6 +137,54 @@ const getUserOverview = catchAsync(async (req: Request, res: Response) => {
 });
 
 
+const updateUserById = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.params?.id;
+  const data = req.body;
+
+  const result = await UserService.updateUserByIdToDB(userId, data);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'User updated successfully',
+    data: result,
+  });
+});
+
+const deleteUserById = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.params?.id;
+  const result = await UserService.deleteUserByIdFromDB(userId);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'User deleted successfully',
+    data: result,
+  });
+});
+
+const getAdminDashboardOverview = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserService.getAdminDashboardOverview();
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Admin dashboard overview retrieved successfully',
+    data: result,
+  });
+});
+
+const getAllAdminUsers = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserService.getAllAdminUsers(req.query);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Admin users retrieved successfully',
+    pagination: result.pagination,
+    data: result.data,
+  });
+});
 
 export const UserController = {
   createUser,
@@ -136,5 +192,9 @@ export const UserController = {
   updateProfile,
   getAllUsers,
   getUserProfileById,
-  getUserOverview
+  getUserOverview,
+  updateUserById,
+  deleteUserById,
+  getAdminDashboardOverview,
+  getAllAdminUsers
 };
